@@ -3,28 +3,28 @@
 notify-send -t 3000 "Getting list of available networks ... "
 
 #get wifi connections
-wifi_list=$(nmcli --fields "SECURITY,SSID,IN-USE" device wifi list | sed 1d | sed 's/  */ /g' | sed -E "s/WPA*.?\S/ /g" | sed "s/^--/ /g" | sed "s/ //g" | sed "/^--/d" | sed 's/*/ /g')
+wifi_list=$(nmcli --fields "SECURITY,SSID,IN-USE" device wifi list | sed 1d | sed 's/  */ /g' | sed -E "s/WPA*.?\S/ /g" | sed "s/^--/ /g" | sed "s/ //g" | sed "/^--/d" | sed 's/*/ /g')
 
 #get wireguard configurations
-wg_list=$(nmcli --fields "TYPE,NAME,ACTIVE" connection | grep wireguard | sed 's/  */ /g' | sed 's/wireguard/嬨 /g' | sed 's/yes/ /g' | sed 's/no//')
+wg_list=$(nmcli --fields "TYPE,NAME,ACTIVE" connection | grep wireguard | sed 's/  */ /g' | sed 's/wireguard/󰖂 /g' | sed 's/yes/  /g' | sed 's/no//')
 
 #get wifi power status
 connected=$(nmcli -fields WIFI g)
 if [[ "$connected" =~ "enabled" ]]; then
-        toggle="睊  Disable Wi-Fi"
+        toggle="󱚼  Disable Wi-Fi"
 elif [[ "$connected" =~ "disabled" ]]; then
-        toggle="直  Enable Wi-Fi"
+        toggle="󱚽  Enable Wi-Fi"
 fi
 
 #wofi parameters
 #dynamic_width
-dynamic_width=$(($(echo "$toggle\n$wifi_list\n$wg_list" | head -n 1 | awk '{print length($0); }')*10))
+dynamic_width=$(($(echo "$toggle\n$wifi_list\n$wg_list" | head -n 1 | awk '{print length($0); }')*5))
 
 # Use wofi as network selector
-chosen_network=$(echo -e "WiFi:\n$toggle\n$wifi_list\nWireguard:\n$wg_list" | uniq -u | wofi -i -d -p "Wi-Fi SSID: " --style ~/.config/wofi/wofi.css --location=3 --width $dynamic_width --cache-file /dev/null)
+chosen_network=$(echo -e "WiFi:\n$toggle\n$wifi_list\nWireguard:\n$wg_list" | uniq -u | wofi -i -d -p "Wi-Fi SSID: " --style ~/.config/wofi/wifi.css --location=3 --width $dynamic_width --cache-file /dev/null)
 
 # Get name of connection
-chosen_id=$(echo "${chosen_network:3}" | sed 's/ //' | xargs)
+chosen_id=$(echo "${chosen_network:3}" | sed 's/ //' | xargs)
 
 #get saved connections for comparison
 saved_connections=$(nmcli -g NAME connection)
@@ -35,20 +35,20 @@ match_id=$(echo "$saved_connections" | grep -w "$chosen_id")
 if [ "$chosen_network" = "" ]; then
     exit
 
-elif [ "$chosen_network" = "直  Enable Wi-Fi" ]; then
+elif [ "$chosen_network" = "󱚽  Enable Wi-Fi" ]; then
     nmcli radio wifi on
     notify-send -t 5000 "WiFi status" "powered on"
 
-elif [ "$chosen_network" = "睊  Disable Wi-Fi" ]; then
+elif [ "$chosen_network" = "󱚼  Disable Wi-Fi" ]; then
     nmcli radio wifi off
     notify-send -t 5000  "WiFi status" "is off now"
 
-elif [ "$(echo $chosen_network | grep -o  )" = "" ]; then
+elif [ "$(echo $chosen_network | grep -o  )" = "" ]; then
     nmcli connection down "$chosen_id" | grep "successfully" && notify-send -t 5000 "$chosen_id" "Has been disconnected"
     nmcli connection down "$match_id" | grep "successfully" && notify-send -t 5000 "$chosen_id" "Has been disconnected"
 
-elif [ "$(echo $chosen_network | grep -o 嬨 )" = "嬨" ]; then
-    chosen_id=$(echo $chosen_network | sed 's/^嬨//' | sed 's///')
+elif [ "$(echo $chosen_network | grep -o 󰖂  )" = "󰖂" ]; then
+    chosen_id=$(echo $chosen_network | sed 's/^󰖂 //' | sed 's/ //')
     nmcli connection up $chosen_id | grep "successfully" && notify-send -t 5000 "$chosen_id" "Tunnel activated"
 
 else
